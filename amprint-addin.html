@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AM Print Oy – Order System</title>
+<style>
+@media print {
+  .no-print{display:none!important;}
+  .print-only{display:block!important;}
+  body{background:white;padding:0;}
+  .pdf-sheet{box-shadow:none;margin:0;border:none;}
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#185FA5;--blue-light:#E6F1FB;--blue-mid:#378ADD;
+  --green-light:#EAF3DE;--green-dark:#27500A;
+  --red-light:#FCEBEB;--red-dark:#791F1F;
+  --gray-bg:#F4F3F0;--white:#fff;
+  --border:rgba(0,0,0,0.11);--border-strong:rgba(0,0,0,0.18);
+  --text:#1a1a1a;--muted:#666;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gray-bg);color:var(--text);min-height:100vh;padding:2rem 1rem;}
+.container{max-width:780px;margin:0 auto;}
+.header{margin-bottom:1.75rem;}
+.brand{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;}
+h1{font-size:22px;font-weight:600;margin-bottom:3px;}
+.subtitle{font-size:13px;color:var(--muted);}
+.card{background:var(--white);border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:1rem;}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.field:last-child{margin-bottom:0;}
+label{font-size:12px;font-weight:600;color:var(--muted);}
+input,select,textarea{font-size:14px;font-family:inherit;color:var(--text);background:#f9f8f6;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 10px;width:100%;outline:none;transition:border-color .15s,box-shadow .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue-mid);box-shadow:0 0 0 3px rgba(55,138,221,0.12);}
+input[type=password]{font-family:monospace;}
+textarea{resize:vertical;line-height:1.5;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.btn{padding:9px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;border:0.5px solid var(--border-strong);background:transparent;color:var(--text);transition:all .12s;font-family:inherit;}
+.btn:hover{background:#f0eeea;}
+.btn-primary{background:var(--blue);border-color:var(--blue);color:#E6F1FB;}
+.btn-primary:hover{background:#0C447C;}
+.btn-primary:disabled{background:#ccc;border-color:#ccc;color:#999;cursor:not-allowed;}
+.btn-green{background:#3B6D11;border-color:#3B6D11;color:#EAF3DE;}
+.btn-green:hover{background:#27500A;}
+.status{font-size:13px;padding:9px 13px;border-radius:var(--radius-sm);margin-top:10px;}
+.status.ok{background:var(--green-light);color:var(--green-dark);}
+.status.err{background:var(--red-light);color:var(--red-dark);}
+.status.loading{background:var(--blue-light);color:#0C447C;}
+.api-note{font-size:12px;color:var(--muted);margin-top:6px;display:flex;align-items:center;gap:5px;}
+.steps{display:flex;gap:0;margin-bottom:1.75rem;border:0.5px solid var(--border-strong);border-radius:var(--radius);overflow:hidden;}
+.step-item{flex:1;padding:10px;text-align:center;font-size:12px;font-weight:500;color:var(--muted);background:var(--white);border-right:0.5px solid var(--border);transition:all .2s;}
+.step-item:last-child{border-right:none;}
+.step-item.active{background:var(--blue-light);color:#0C447C;}
+.step-item.done{background:var(--green-light);color:var(--green-dark);}
+.step-num{display:block;font-size:10px;font-weight:600;opacity:0.7;margin-bottom:2px;}
+.section-hidden{display:none;}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;flex-wrap:wrap;}
+
+/* Tuotekortit tarkistusnäkymässä */
+.product-row{background:#f9f8f6;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;}
+.product-row-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.product-name{font-size:14px;font-weight:600;flex:1;}
+.product-price{font-size:14px;font-weight:600;color:var(--blue);}
+.tag{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;}
+.tag-digipaino{background:#E6F1FB;color:#0C447C;}
+.tag-suurkuva{background:#FAEEDA;color:#633806;}
+.tag-alihankinta{background:#FCEBEB;color:#791F1F;}
+.product-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+.product-edit{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);}
+.edit-f{display:flex;flex-direction:column;gap:3px;}
+.edit-f span{font-size:11px;font-weight:600;color:var(--muted);}
+.edit-f input,.edit-f select{font-size:13px;padding:5px 8px;}
+
+.client-bar{background:var(--blue-light);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;display:flex;flex-wrap:wrap;gap:16px;}
+.client-item{font-size:13px;color:#0C447C;}
+.client-item strong{font-weight:600;}
+.total-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:0.5px solid var(--border-strong);margin-top:8px;}
+.total-label{font-size:13px;font-weight:600;}
+.total-val{font-size:20px;font-weight:600;color:var(--blue);}
+.notes-box{background:#FAEEDA;border-radius:var(--radius-sm);padding:10px 14px;margin-top:10px;font-size:13px;color:#633806;line-height:1.5;}
+.notes-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+
+/* SUCCESS */
+.success-wrap{text-align:center;padding:1.5rem 0;}
+.tick{width:52px;height:52px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;}
+.job-num-badge{font-family:monospace;font-size:18px;font-weight:700;color:var(--blue);background:var(--blue-light);border-radius:var(--radius-sm);padding:8px 20px;display:inline-block;margin:10px 0;}
+
+/* =================== PDF TYÖMÄÄRÄIN =================== */
+.pdf-sheet{background:white;max-width:780px;margin:2rem auto;border-radius:var(--radius);box-shadow:0 2px 20px rgba(0,0,0,0.1);overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;}
+.pdf-header{background:#185FA5;color:white;padding:20px 28px;display:flex;justify-content:space-between;align-items:flex-start;}
+.pdf-company{font-size:20px;font-weight:700;letter-spacing:0.02em;}
+.pdf-tagline{font-size:12px;opacity:0.8;margin-top:2px;}
+.pdf-meta{text-align:right;}
+.pdf-jobnum{font-size:22px;font-weight:700;font-family:monospace;}
+.pdf-date{font-size:12px;opacity:0.8;margin-top:2px;}
+.pdf-body{padding:20px 28px;}
+.pdf-section{margin-bottom:16px;}
+.pdf-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#185FA5;border-bottom:1.5px solid #185FA5;padding-bottom:3px;margin-bottom:10px;}
+.pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pdf-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.pdf-field{display:flex;flex-direction:column;gap:2px;}
+.pdf-field-label{font-size:10px;font-weight:600;color:#444;text-transform:uppercase;letter-spacing:0.05em;}
+.pdf-field-value{font-size:13px;font-weight:500;color:#1a1a1a;}
+.pdf-field-value.empty{color:#ccc;}
+
+/* Tuotetaulukko PDF:ssä */
+.pdf-table{width:100%;border-collapse:collapse;font-size:12px;}
+.pdf-table th{background:#f4f3f0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#666;padding:6px 8px;text-align:left;border-bottom:1px solid #ddd;}
+.pdf-table td{padding:7px 8px;border-bottom:0.5px solid #eee;vertical-align:top;}
+.pdf-table tr:last-child td{border-bottom:none;}
+.pdf-table tr:nth-child(even) td{background:#fafaf9;}
+.pdf-tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;margin-right:3px;}
+.pdf-tag-dig{background:#E6F1FB;color:#0C447C;}
+.pdf-tag-suur{background:#FAEEDA;color:#633806;}
+.pdf-tag-alih{background:#FCEBEB;color:#791F1F;}
+
+.pdf-total{display:flex;justify-content:flex-end;margin-top:10px;}
+.pdf-total-box{background:#185FA5;color:white;border-radius:6px;padding:8px 16px;text-align:right;}
+.pdf-total-label{font-size:10px;opacity:1;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.9);}
+.pdf-total-val{font-size:18px;font-weight:700;}
+
+.pdf-notes{background:#fffbf0;border:1px solid #F0997B;border-radius:6px;padding:10px 14px;margin-top:12px;}
+.pdf-notes-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#D85A30;margin-bottom:4px;}
+.pdf-notes-text{font-size:12px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;}
+
+.pdf-footer{background:#f4f3f0;padding:10px 28px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#888;}
+.pdf-sig{display:flex;gap:40px;}
+.pdf-sig-item{display:flex;flex-direction:column;gap:16px;}
+.pdf-sig-line{width:140px;border-bottom:0.5px solid #999;}
+.pdf-sig-label{font-size:10px;color:#999;}
+
+.print-only{display:none;}
+@media(max-width:500px){.grid2,.grid3,.product-edit,.pdf-grid,.pdf-grid3{grid-template-columns:1fr;}body{padding:1rem .5rem;}}
+</style>
+</head>
+<body>
+<div class="container no-print">
+
+<div class="header">
+  <div class="brand">AM Print Oy</div>
+  <h1>Order System</h1>
+  <p class="subtitle">Paste order email – AI identifies jobs and creates a work order automatically.</p>
+</div>
+
+<div class="steps">
+  <div class="step-item active" id="step1"><span class="step-num">1</span>Email</div>
+  <div class="step-item" id="step2"><span class="step-num">2</span>Review</div>
+  <div class="step-item" id="step3"><span class="step-num">3</span>Work Order</div>
+</div>
+
+<!-- VAIHE 1 -->
+<div id="phase1">
+  <div class="card">
+    <div class="card-title">API Keys</div>
+    <div class="grid2">
+      <div class="field">
+        <label>Airtable Personal Access Token</label>
+        <input type="password" id="pat" placeholder="patXXXXXXXXXXXXXX" autocomplete="off" oninput="saveKeys()"/>
+      </div>
+      <div class="field">
+        <label>Claude API Key</label>
+        <input type="password" id="claudeKey" placeholder="sk-ant-XXXXXXXX" autocomplete="off" oninput="saveKeys()"/>
+        <div class="api-note">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="5" width="8" height="6" rx="1"/><path d="M4 5V3.5a2 2 0 014 0V5"/></svg>
+          Saved automatically in this browser
+          <button onclick="clearKeys()" style="margin-left:auto;font-size:11px;padding:2px 8px;border-radius:4px;border:0.5px solid var(--border-strong);background:transparent;cursor:pointer;color:var(--muted);">Clear keys</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Order details</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Customer</label>
+        <input type="text" id="clientName" placeholder="Company name"/>
+      </div>
+      <div class="field">
+        <label>Salesperson</label>
+        <select id="salesperson">
+          <option value="">Select...</option>
+          <option>Jukka</option><option>Ville</option><option>Heidi</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Deadline</label>
+        <input type="date" id="deadline"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Order email</div>
+    <button onclick="pasteFromClipboard()" style="width:100%;background:#185FA5;color:#E6F1FB;border:none;border-radius:8px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;">
+      📋 Liitä sähköposti Outlookista
+    </button>
+    <div class="field">
+      <label>Tai liitä sähköpostin teksti tähän käsin</label>
+      <textarea id="emailText" rows="6" placeholder="Liitä tilaussähköposti tähän..."></textarea>
+    </div>
+    <div id="parseStatus"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnFi" onclick="setLang('fi');parseEmail()">🇫🇮 Tunnista tilaus (suomi)</button>
+      <button class="btn" id="btnEn" onclick="setLang('en');parseEmail()">🇬🇧 Identify order (English)</button>
+    </div>
+  </div>
+</div>
+
+<!-- VAIHE 2: Tarkistus -->
+<div id="phase2" class="section-hidden">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div class="card-title" style="margin:0;">Review order</div>
+      <button class="btn" style="font-size:13px;padding:5px 14px;" onclick="backToPhase1()">← Edit email</button>
+    </div>
+
+    <!-- Editable order details -->
+    <div style="background:#f0f4fa;border:0.5px solid #b5d4f4;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;">Order details – edit if needed</div>      <div class="grid3" style="margin-bottom:8px;">
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Customer</span><input type="text" id="edit-client" style="font-size:13px;padding:5px 8px;" oninput="parsedData.client.name=this.value"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Job title</span><input type="text" id="edit-jobtitle" style="font-size:13px;padding:5px 8px;" placeholder="e.g. Summer campaign"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Contact person</span><input type="text" id="edit-contact" style="font-size:13px;padding:5px 8px;" oninput="parsedData.client.contact=this.value"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Customer email *</span><input type="email" id="edit-email" style="font-size:13px;padding:5px 8px;" oninput="parsedData.client.email=this.value"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Phone</span><input type="tel" id="edit-phone" style="font-size:13px;padding:5px 8px;" oninput="parsedData.client.phone=this.value"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Deadline</span><input type="date" id="edit-deadline" style="font-size:13px;padding:5px 8px;" oninput="parsedData.client.deadline=this.value"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Delivery</span>
+          <select id="edit-delivery" style="font-size:13px;padding:5px 8px;" onchange="parsedData.client.delivery=this.value">
+            <option value="">–</option><option>Pickup</option><option>Post</option><option>Courier</option><option>Velox</option>
+          </select>
+        </div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Address</span><input type="text" id="edit-address" style="font-size:13px;padding:5px 8px;" oninput="parsedData.client.address=this.value"/></div>
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Priority</span>
+          <select id="edit-priority" style="font-size:13px;padding:5px 8px;font-weight:600;" onchange="updatePriorityStyle(this)">
+            <option value="Normal" style="color:#27500A;">🟢 Normal</option>
+            <option value="Important" style="color:#0C447C;">🔵 Important</option>
+            <option value="Urgent" style="color:#791F1F;">🔴 Urgent</option>
+          </select>
+        </div>
+      </div>
+      <!-- Salesperson row below grid -->
+      <div style="margin-top:8px;">
+        <div class="edit-f"><span style="font-size:11px;font-weight:600;color:var(--muted);">Salesperson</span>
+          <select id="edit-salesperson" style="font-size:13px;padding:5px 8px;">
+            <option value="">Select...</option>
+            <option>Jukka</option><option>Ville</option><option>Heidi</option>
+          </select>
+          <div id="salesperson-status" style="display:none;font-size:11px;color:#791F1F;background:#FCEBEB;padding:4px 8px;border-radius:4px;margin-top:4px;">⚠️ Airtable-käyttäjää ei löydy – Salesperson ei tallennu Airtableen</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salesperson notes box -->
+    <div style="background:#fffbf0;border:1px solid #F0997B;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:11px;font-weight:600;color:#D85A30;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">📝 Salesperson notes (internal – not shown to customer)</div>
+      <textarea id="sellerNotes" rows="3" placeholder="Add internal notes here – special instructions, follow-up needed, pricing notes..." style="font-size:13px;width:100%;background:white;border:0.5px solid var(--border-strong);border-radius:var(--radius-sm);padding:8px 10px;resize:vertical;font-family:inherit;"></textarea>    </div>
+
+    <div id="productList"></div>
+
+    <button onclick="addManualProduct()" style="width:100%;padding:8px;border:0.5px dashed var(--border-strong);border-radius:var(--radius-sm);background:transparent;cursor:pointer;font-size:13px;color:var(--muted);font-family:inherit;margin-bottom:8px;">+ Add product manually</button>
+
+    <div class="total-bar">
+      <span class="total-label">Total excl. VAT</span>
+      <span class="total-val" id="grandTotal">€0.00</span>
+    </div>
+
+    <div id="notesBox" class="notes-box section-hidden">
+      <div class="notes-label">Notes (extracted by AI from email – editable)</div>
+      <textarea id="notesText" rows="3" style="width:100%;background:transparent;border:none;border-top:0.5px solid rgba(99,56,6,0.2);margin-top:6px;padding-top:6px;font-size:13px;color:#633806;font-family:inherit;resize:vertical;outline:none;" oninput="parsedData.notes=this.value;"></textarea>
+    </div>
+  </div>
+
+  <div id="submitStatus"></div>
+
+  <div class="actions">
+    <button class="btn" onclick="backToPhase1()">← Back</button>
+    <button class="btn btn-primary" id="btnSubmit" onclick="submitToAirtable()">Save to Airtable & create work order →</button>
+  </div>
+</div>
+
+<!-- VAIHE 3: PDF -->
+<div id="phase3" class="section-hidden">
+  <div class="card">
+    <div class="success-wrap">
+      <div class="tick">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#3B6D11" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <p style="font-weight:600;font-size:16px;margin-bottom:4px;">Saved to Airtable!</p>
+      <div class="job-num-badge" id="successJobNum"></div>
+      <p style="font-size:13px;color:var(--muted);margin-top:8px;">Work order is ready below. Print or save as PDF.</p>
+    </div>
+  </div>
+  <div class="actions" style="margin-bottom:1rem;">
+    <button class="btn" onclick="resetAll()">New order</button>
+    <a href="https://airtable.com/appdzaxTa4Krr56Vu/tblMiYBYnAi8fFpII" target="_blank" class="btn">Open Airtable</a>
+    <button class="btn btn-green" onclick="printWithFilename()">Print / Save PDF</button>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<!-- PDF TYÖMÄÄRÄIN -->
+<div class="pdf-sheet" id="pdfSheet" style="display:none;">
+  <div class="pdf-header">
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:12px;font-weight:700;color:#fff;letter-spacing:0.06em;text-transform:uppercase;">AM Print Oy &nbsp;·&nbsp; Print Services</div>
+      <div id="pdf-customer-header" style="font-size:22px;font-weight:700;color:#fff;letter-spacing:0.01em;line-height:1.15;"></div>
+      <div id="pdf-jobtitle-header" style="font-size:13px;font-weight:500;color:#fff;margin-top:2px;"></div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:10px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px;">Deadline</div>
+      <div id="pdf-deadline-header" style="font-size:26px;font-weight:700;color:#fff;line-height:1;">–</div>
+      <div id="pdf-date" style="margin-top:6px;font-size:11px;color:#fff;"></div>
+      <div id="pdf-priority-badge" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <div class="pdf-body">
+    <div class="pdf-grid" style="margin-bottom:16px;">
+      <div class="pdf-section" style="margin:0;">
+        <div class="pdf-section-title">Customer</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="pdf-field"><span class="pdf-field-label">Customer</span><span class="pdf-field-value" id="pdf-client">–</span></div>
+          <div class="pdf-field"><span class="pdf-field-label">Contact</span><span class="pdf-field-value" id="pdf-contact">–</span></div>
+          <div class="pdf-field"><span class="pdf-field-label">Email</span><span class="pdf-field-value" id="pdf-email">–</span></div>
+          <div class="pdf-field"><span class="pdf-field-label">Phone</span><span class="pdf-field-value" id="pdf-phone">–</span></div>
+        </div>
+      </div>
+      <div class="pdf-section" style="margin:0;">
+        <div class="pdf-section-title">Order details</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="pdf-field">
+            <span class="pdf-field-label">Salesperson</span>
+            <span class="pdf-field-value" id="pdf-seller" style="font-size:16px;font-weight:700;color:#185FA5;">–</span>
+          </div>
+          <div class="pdf-field"><span class="pdf-field-label">Delivery</span><span class="pdf-field-value" id="pdf-delivery">–</span></div>
+          <div class="pdf-field"><span class="pdf-field-label">Address</span><span class="pdf-field-value" id="pdf-address">–</span></div>
+          <div class="pdf-field"><span class="pdf-field-label">Job Title</span><span class="pdf-field-value" id="pdf-jobtitle" style="font-weight:600;">–</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-section">
+      <div class="pdf-section-title">Products & services</div>
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width:46%;">Product / Description &amp; Specifications</th>
+            <th style="width:8%;text-align:center;">Qty</th>
+            <th style="width:16%;">Department</th>
+            <th style="width:14%;">Outsourced</th>
+            <th style="width:16%;text-align:right;">Price excl. VAT</th>
+          </tr>
+        </thead>
+        <tbody id="pdf-products"></tbody>
+      </table>
+      <div class="pdf-total">
+        <div class="pdf-total-box" style="background:#185FA5;">
+          <div class="pdf-total-label" style="color:rgba(255,255,255,0.85);font-weight:700;">Total excl. VAT</div>
+          <div class="pdf-total-val" id="pdf-total" style="color:#fff;font-size:22px;">0,00 €</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pdf-notes-section" style="display:none;">
+      <div class="pdf-notes">
+        <div class="pdf-notes-title">Notes for production</div>
+        <div class="pdf-notes-text" id="pdf-notes-text"></div>
+        <div id="pdf-seller-notes-wrap" style="display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid #F0997B;">
+          <div class="pdf-notes-title" style="color:#185FA5;">Salesperson notes</div>
+          <div class="pdf-notes-text" id="pdf-seller-notes-text"></div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <div class="pdf-footer">
+    <span>AM Print Oy – Work Order</span>
+    <span id="pdf-footer-jobnum"></span>
+    <span id="pdf-footer-date"></span>
+  </div>
+</div>
+
+<script>
+const BASE_ID='appdzaxTa4Krr56Vu';
+const TABLE_ID='tblMiYBYnAi8fFpII';
+let parsedData={client:{},products:[],notes:''};
+let currentJobNum='';
+let jobTitle='';
+let orderLanguage='fi'; // 'fi' or 'en'
+
+function gv(id){const e=document.getElementById(id);return e?e.value.trim():'';}
+
+function saveKeys(){
+  const pat=document.getElementById('pat').value.trim();
+  const key=document.getElementById('claudeKey').value.trim();
+  if(pat){localStorage.setItem('amprint_pat',pat);loadCollaborators(pat);}
+  if(key)localStorage.setItem('amprint_claude',key);
+}
+
+function loadKeys(){
+  const pat=localStorage.getItem('amprint_pat');
+  const key=localStorage.getItem('amprint_claude');
+  if(pat)document.getElementById('pat').value=pat;
+  if(key)document.getElementById('claudeKey').value=key;
+  if(pat)loadCollaborators(pat);
+}
+
+// Stores collaborator objects {id, name, email} for Airtable submission
+// Known Airtable collaborators – add more when new users get accounts
+const KNOWN_USERS=[
+  {id:'Jukka', name:'Jukka'},
+  {id:'Ville', name:'Ville'},
+  {id:'Heidi', name:'Heidi'},
+];
+
+let collaborators=[...KNOWN_USERS];
+
+async function loadCollaborators(pat){
+  collaborators=[];
+  const seen={};
+
+  // Start with known users
+  KNOWN_USERS.forEach(u=>{
+    seen[u.id]=true;
+    collaborators.push(u);
+  });
+
+  // Also pick up any new collaborators already saved in Salesperson field
+  try{
+    const r=await fetch('https://api.airtable.com/v0/'+BASE_ID+'/'+TABLE_ID+'?fields[]=Salesperson&maxRecords=50',{
+      headers:{'Authorization':'Bearer '+pat}
+    });
+    if(r.ok){
+      const d=await r.json();
+      (d.records||[]).forEach(rec=>{
+        const sp=rec.fields['Salesperson'];
+        if(sp&&sp.id&&!seen[sp.id]){
+          const n=sp.name&&sp.name.trim()?sp.name.trim():sp.email?sp.email.split('@')[0]:sp.id;
+          seen[sp.id]=true;
+          collaborators.push({id:sp.id,name:n});
+        }
+      });
+    }
+  }catch(e){}
+
+  // Build dropdown
+  const sel=document.getElementById('edit-salesperson');
+  if(!sel)return;
+  sel.innerHTML='<option value="">Select...</option>';
+  collaborators.forEach(c=>{
+    sel.innerHTML+=`<option value="${c.id}">${c.name}</option>`;
+  });
+  // Hide warning
+  const statusEl=document.getElementById('salesperson-status');
+  if(statusEl)statusEl.style.display='none';
+}
+
+function clearKeys(){
+  localStorage.removeItem('amprint_pat');
+  localStorage.removeItem('amprint_claude');
+  document.getElementById('pat').value='';
+  document.getElementById('claudeKey').value='';
+  alert('API Keys cleared.');
+}
+function showStatus(id,msg,type){const el=document.getElementById(id);el.className='status '+type;el.textContent=msg;}
+function setStep(n){
+  ['step1','step2','step3'].forEach((s,i)=>{
+    const el=document.getElementById(s);
+    el.className='step-item'+(i+1<n?' done':i+1===n?' active':'');
+  });
+}
+async function genJobNum(pat){
+  // Week-based numbering: resets every Monday (ISO week Mon-Sun)
+  // Format: AMP-YYYY-Www-NNN (e.g. AMP-2026-W19-003)
+  const now=new Date();
+  // ISO week: Thursday determines the year
+  const thu=new Date(now);
+  thu.setDate(now.getDate()+(4-((now.getDay()||7))));
+  const y=thu.getFullYear();
+  const startOfYear=new Date(y,0,1);
+  const weekNum=Math.ceil(((thu-startOfYear)/86400000+1)/7);
+  const weekStr='W'+String(weekNum).padStart(2,'0');
+  const prefix='AMP-'+y+'-'+weekStr+'-';
+
+  try{
+    const r=await fetch('https://api.airtable.com/v0/'+BASE_ID+'/'+TABLE_ID+'?fields[]=Job%20Number&sort[0][field]=Created%20Time&sort[0][direction]=desc&maxRecords=200',{
+      headers:{'Authorization':'Bearer '+pat}
+    });
+    if(!r.ok)throw new Error('fetch failed');
+    const d=await r.json();
+    let max=0;
+    (d.records||[]).forEach(rec=>{
+      const jn=rec.fields['Job Number']||'';
+      const m=jn.match(new RegExp('AMP-'+y+'-'+weekStr+'-([0-9]+)'));
+      if(m){const n=parseInt(m[1]);if(n>max)max=n;}
+    });
+    return prefix+String(max+1).padStart(3,'0');
+  }catch(e){
+    return prefix+String(Math.floor(Math.random()*900)+100);
+  }
+}
+
+function setLang(lang){
+  orderLanguage=lang;
+  document.getElementById('btnFi').className='btn'+(lang==='fi'?' btn-primary':'');
+  document.getElementById('btnEn').className='btn'+(lang==='en'?' btn-primary':'');
+}
+
+async function parseEmail(){
+  const emailText=gv('emailText');
+  const claudeKey=gv('claudeKey');
+  if(!emailText){showStatus('parseStatus','Please paste the email text first.','err');return;}
+  if(!claudeKey){showStatus('parseStatus','Please enter your Claude API Key.','err');return;}
+  showStatus('parseStatus','AI is reading the email...','loading');
+
+  const langInstruction=orderLanguage==='fi'
+    ?'Write ALL text fields (name, description, jobTitle, notes) in FINNISH.'
+    :'Write ALL text fields (name, description, notes) in ENGLISH. IMPORTANT EXCEPTION: jobTitle must ALWAYS be written in Finnish regardless of language setting – it is used as the PDF filename.';
+
+  const sys=`You are the order system for AM Print Oy. Read the email and return ONLY JSON with no other text.
+${langInstruction}
+{
+  "client": {
+    "name": "customer company name or empty",
+    "jobTitle": "email subject line or order description, NOT the company name",
+    "contact": "contact person or empty",
+    "email": "email or empty",
+    "phone": "phone or empty",
+    "deadline": "YYYY-MM-DD or empty – IMPORTANT: if customer says X business days or working days, count ONLY Monday-Friday. Skip weekends. Today is "+new Date().toLocaleDateString('fi-FI')+". E.g. if today is Friday and customer wants 3 business days, deadline is next Wednesday.",
+    "delivery": "Pickup|Post|Courier|Transport|Velox or empty",
+    "address": "delivery address or empty"
+  },
+  "products": [
+    {
+      "name": "clear product name",
+      "description": "short spec: size, paper, colors, finishing",
+      "quantity": 0,
+      "price": 0,
+      "department": "Digital Print|Large Format|Other",
+      "subcontracted": false,
+      "notes": ""
+    }
+  ],
+  "notes": "production notes that don't fit product fields, e.g. special requests, schedule notes, material status"
+}
+Every product, service (delivery, installation, design, rental) is its own products entry.
+Prices as numbers without currency symbol. Comma decimal separator to dot (e.g. 210,00 to 210).
+Large Format = large posters, rollup, exhibition displays, vinyl wraps, boards, outdoor. Digital Print = brochures, business cards, books, forms, stationery, stickers, static clings.
+Outsourced = product AM Print does not produce in-house but purchases from a partner.
+
+PRICE CALCULATION RULES – follow these exactly:
+1. If price is given as TOTAL (e.g. "100 kpl = 45,00e" or "yht. 45e"): price = 45
+2. If price is given as UNIT PRICE (e.g. "0,90e/kpl", "€0.90 per piece", "á 0,90e"): price = unit_price × quantity. Example: 150 kpl × 0,90e = 135.
+3. If multiple items share one total price (e.g. "Familia 50kpl + Apaja 100kpl, yht. 150kpl, 0,90e/kpl"): split into separate products, calculate each: Familia = 50 × 0,90 = 45, Apaja = 100 × 0,90 = 90.
+4. Always put the TOTAL price (not unit price) in the price field.
+5. In the description field, note the unit price if given: e.g. "150x150mm, 0,90€/kpl"`;
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'x-api-key':claudeKey,
+        'anthropic-version':'2023-06-01',
+        'content-type':'application/json',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:2000,
+        system:sys,
+        messages:[{role:'user',content:(()=>{
+        const today=new Date();
+        const days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const todayStr=today.toISOString().split('T')[0];
+        const todayDay=days[today.getDay()];
+        return 'Customer: '+(gv('clientName')||'?')+'\nSalesperson: '+(gv('salesperson')||'?')+'\nDeadline from form: '+(gv('deadline')||'not set')+'\nToday is: '+todayStr+' ('+todayDay+')\n\nIMPORTANT DEADLINE RULE: If customer mentions X business days or working days, count ONLY Monday-Friday. Skip weekends. Example: Today is Friday + 3 business days = next Wednesday.\n\nEmail:\n'+emailText;
+      })()}]
+      })
+    });
+    if(!r.ok){const e=await r.json();showStatus('parseStatus','Error: '+(e.error?.message||r.status),'err');return;}
+    const data=await r.json();
+    const txt=data.content[0].text.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(txt);
+    parsedData=parsed;
+    if(gv('clientName'))parsedData.client.name=gv('clientName');
+    if(gv('deadline'))parsedData.client.deadline=gv('deadline');
+    parsedData.client.salesperson=gv('salesperson');
+    parsedData.client.priority='Normal';
+    showReview();
+  }catch(e){
+    showStatus('parseStatus','Error: '+e.message,'err');
+  }
+}
+
+function showReview(){
+  const c=parsedData.client;
+  const parts=[];
+  if(c.name)parts.push(`<span class="client-item"><strong>Asiakas:</strong> ${c.name}</span>`);
+  if(c.contact)parts.push(`<span class="client-item"><strong>Contact:</strong> ${c.contact}</span>`);
+  if(c.email)parts.push(`<span class="client-item"><strong>Email:</strong> ${c.email}</span>`);
+  if(c.phone)parts.push(`<span class="client-item"><strong>Puh:</strong> ${c.phone}</span>`);
+  if(c.deadline)parts.push(`<span class="client-item"><strong>Deadline:</strong> ${c.deadline}</span>`);
+  if(c.delivery)parts.push(`<span class="client-item"><strong>Toimitus:</strong> ${c.delivery}</span>`);
+  if(c.salesperson)parts.push(`<span class="client-item"><strong>Myyjä:</strong> ${c.salesperson}</span>`);
+  // Populate editable fields
+  const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.value=v||'';};
+  sv('edit-client',c.name);
+  // Auto-extract company from email if customer name is empty
+  if(!c.name&&c.email){
+    const autoCompany=extractCompanyFromEmail(c.email);
+    if(autoCompany){sv('edit-client',autoCompany);parsedData.client.name=autoCompany;}
+  }
+  // Also fill company from email if name looks like a person (no company set)
+  if(c.email&&!parsedData.client._emailExtracted){
+    const autoCompany=extractCompanyFromEmail(c.email);
+    if(autoCompany&&!c.name){sv('edit-client',autoCompany);parsedData.client.name=autoCompany;}
+    parsedData.client._emailExtracted=true;
+  }
+  sv('edit-contact',c.contact);
+  sv('edit-email',c.email);
+  sv('edit-phone',c.phone);
+  sv('edit-deadline',c.deadline);
+  sv('edit-address',c.address);
+  sv('edit-priority',c.priority||'Normal');
+  updatePriorityStyle(document.getElementById('edit-priority'));
+  sv('edit-jobtitle',c.jobTitle||'');
+  // Rebuild salesperson dropdown with known users and pre-select Jukka (first user) by default
+  const spSel=document.getElementById('edit-salesperson');
+  if(spSel){
+    spSel.innerHTML='<option value="">Select...</option>';
+    collaborators.forEach(u=>{
+      spSel.innerHTML+=`<option value="${u.id}">${u.name}</option>`;
+    });
+    // Try to match saved salesperson name, otherwise leave blank
+    // Salesperson selected manually by user
+  }
+  const delEl=document.getElementById('edit-delivery');
+  if(delEl&&c.delivery){for(let o of delEl.options){if(o.value===c.delivery||o.text===c.delivery){delEl.value=o.value;break;}}}
+
+  const pl=document.getElementById('productList');
+  pl.innerHTML='';
+  parsedData.products.forEach((p,i)=>{
+    const deptTag=p.department==='Large Format'
+      ?`<span class="tag tag-suurkuva">Large Format</span>`
+      :`<span class="tag tag-digipaino">Digital Print</span>`;
+    const alihTag=p.subcontracted?`<span class="tag tag-alihankinta">Outsourced</span>`:'';
+    pl.innerHTML+=`
+    <div class="product-row" id="prod-row-${i}">
+      <div class="product-row-header">
+        <span class="product-name">${p.name}</span>
+        ${deptTag}${alihTag}
+        <span class="product-price">${p.price!=null?p.price.toLocaleString('fi-FI',{minimumFractionDigits:2})+' €':''}</span>
+        <button onclick="removeProduct(${i})" style="margin-left:auto;padding:2px 10px;font-size:12px;border-radius:4px;border:0.5px solid #e0a0a0;background:#FCEBEB;color:#791F1F;cursor:pointer;font-family:inherit;">✕ Remove</button>
+      </div>
+      <div class="product-desc">${p.description||''}</div>
+      <div class="product-edit">
+        <div class="edit-f"><span>Name</span><input type="text" value="${p.name}" onchange="parsedData.products[${i}].name=this.value;"/></div>
+        <div class="edit-f"><span>Price (excl. VAT)</span><input type="number" value="${p.price||''}" placeholder="€" onchange="parsedData.products[${i}].price=parseFloat(this.value)||null;calcTotal();"/></div>
+        <div class="edit-f"><span>Department</span>
+          <select onchange="parsedData.products[${i}].department=this.value;">
+            <option ${p.department==='Digital Print'?'selected':''}>Digital Print</option>
+            <option ${p.department==='Large Format'?'selected':''}>Large Format</option>
+            <option ${p.department==='Other'?'selected':''}>Other</option>
+          </select>
+        </div>
+        <div class="edit-f"><span>Qty</span><input type="number" value="${p.quantity||''}" onchange="parsedData.products[${i}].quantity=parseInt(this.value)||null;"/></div>
+        <div class="edit-f"><span>Outsourced</span>
+          <select onchange="parsedData.products[${i}].subcontracted=this.value==='Yes';">
+            <option ${!p.subcontracted?'selected':''}>No</option>
+            <option ${p.subcontracted?'selected':''}>Yes</option>
+          </select>
+        </div>
+        <div class="edit-f"><span>Description / Specs</span><textarea rows="2" style="font-size:13px;padding:5px 8px;resize:vertical;" onchange="parsedData.products[${i}].description=this.value;">${p.description||''}</textarea></div>
+      </div>
+    </div>`;
+  });
+
+  calcTotal();
+
+  if(parsedData.notes){
+    document.getElementById('notesBox').classList.remove('section-hidden');
+    document.getElementById('notesText').value=parsedData.notes;
+  }
+
+  document.getElementById('phase1').classList.add('section-hidden');
+  document.getElementById('phase2').classList.remove('section-hidden');
+  setStep(2);
+}
+
+function calcTotal(){
+  const t=parsedData.products.reduce((s,p)=>s+(p.price||0),0);
+  document.getElementById('grandTotal').textContent='€'+t.toFixed(2);
+}
+
+async function submitToAirtable(){
+  const pat=gv('pat');
+  if(!pat){showStatus('submitStatus','Please enter your Airtable Personal Access Token.','err');return;}
+  const btn=document.getElementById('btnSubmit');
+  btn.disabled=true;btn.textContent='Saving...';
+  showStatus('submitStatus','Saving to Airtable...','loading');
+
+  const c=parsedData.client;
+  showStatus('submitStatus','Generating job number...','loading');
+  const jobNum=await genJobNum(pat);
+  currentJobNum=jobNum;
+  showStatus('submitStatus','Saving to Airtable...','loading');
+  const priority=document.getElementById('edit-priority')?.value||'Normal';
+  jobTitle=document.getElementById('edit-jobtitle')?.value.trim()||c.jobTitle||c.name||'';
+  const sellerNotes=document.getElementById('sellerNotes')?.value.trim()||'';
+  const manualTotalVal=parseFloat(document.getElementById('manualTotal')?.value||'')||0;
+  const salesperson=document.getElementById('edit-salesperson')?.value||c.salesperson||gv('salesperson')||'';
+  c.salesperson=salesperson;
+
+  // Determine Kanban column: Large Format if ALL products are Large Format, else Prepress
+  const allLargeFormat=parsedData.products.length>0&&parsedData.products.every(p=>p.department==='Large Format');
+  const kanbanColumn=allLargeFormat?'Large Format':'Prepress';
+
+  const productLines=parsedData.products.map(p=>{
+    const parts=[p.name];
+    if(p.description)parts.push(p.description);
+    if(p.quantity)parts.push(p.quantity+' pcs');
+    if(p.price!=null)parts.push('€'+p.price.toFixed(2)+' excl. VAT');
+    if(p.department)parts.push('['+p.department+']');
+    if(p.subcontracted)parts.push('[OUTSOURCED]');
+    return parts.join(' | ');
+  }).join('\n');
+
+  const total=parsedData.products.reduce((s,p)=>s+(p.price||0),0);
+
+  const emailVal=document.getElementById('edit-email')?.value||c.email||'';
+  const deadlineVal=document.getElementById('edit-deadline')?.value||c.deadline||'';
+  const deliveryVal=document.getElementById('edit-delivery')?.value||c.delivery||'';
+  const addressVal=document.getElementById('edit-address')?.value||c.address||'';
+  const desc=[
+    '=== WORK ORDER '+jobNum+' – '+(jobTitle||'')+' ===',
+    priority!=='Normal'&&'PRIORITY: '+priority.toUpperCase(),
+    'Customer: '+(document.getElementById('edit-client')?.value||c.name||''),
+    (document.getElementById('edit-contact')?.value||c.contact)&&'Contact: '+(document.getElementById('edit-contact')?.value||c.contact),
+    emailVal&&'Email: '+emailVal,
+    (document.getElementById('edit-phone')?.value||c.phone)&&'Phone: '+(document.getElementById('edit-phone')?.value||c.phone),
+    c.salesperson&&'Salesperson: '+c.salesperson,
+    deadlineVal&&'Deadline: '+deadlineVal,
+    deliveryVal&&'Delivery: '+deliveryVal,
+    addressVal&&'Address: '+addressVal,
+    '',
+    '--- PRODUCTS ---',
+    productLines,
+    '',
+    'TOTAL: €'+total.toFixed(2)+' excl. VAT',
+    parsedData.notes&&'\nNOTES:\n'+parsedData.notes,
+    sellerNotes&&'\nSALESPERSON NOTES (internal):\n'+sellerNotes,
+  ].filter(v=>v!==false&&v!==undefined&&v!==null&&v!=='').join('\n');
+
+  const fields={'Työn nimi':jobTitle||jobNum,'Description':desc,'Job Number':jobNum};
+  if(deadlineVal)fields['Deadline']=deadlineVal;
+  if(deliveryVal)fields['Delivery Method']=deliveryVal;
+  if(addressVal)fields['Delivery Address Override']=addressVal;
+  if(total)fields['Price (Quoted)']=total;
+  if(emailVal)fields['Customer Email']=emailVal;
+  const customerName=document.getElementById('edit-client')?.value||parsedData.client.name||'';
+  if(customerName)fields['Customer Name']=customerName;
+  // Salesperson is included in the Description text field above
+  // Send as Airtable collaborator if we have an ID
+  const spVal=document.getElementById('edit-salesperson')?.value||'';
+  if(spVal){
+    // If it looks like an Airtable user ID (starts with 'usr'), send as collaborator object
+    if(spVal.startsWith('usr')){
+      fields['Salesperson']=spVal;
+    } else {
+      // Fallback: try to find by name in collaborators array
+      const found=collaborators.find(c=>c.name===spVal||c.id===spVal);
+      if(found)fields['Salesperson']={id:found.id};
+    }
+  }
+
+  try{
+    const r=await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`,{
+      method:'POST',
+      headers:{'Authorization':`Bearer ${pat}`,'Content-Type':'application/json'},
+      body:JSON.stringify({fields})
+    });
+    const d=await r.json();
+    if(r.ok){
+      buildPDF(jobNum);
+      document.getElementById('successJobNum').textContent=jobNum+(jobTitle?' – '+jobTitle:'');
+      document.getElementById('phase2').classList.add('section-hidden');
+      document.getElementById('phase3').classList.remove('section-hidden');
+      document.getElementById('pdfSheet').style.display='block';
+      setStep(3);
+    }else{
+      showStatus('submitStatus','Error: '+(d.error?.message||JSON.stringify(d.error)),'err');
+      btn.disabled=false;btn.textContent='Save to Airtable & create work order →';
+    }
+  }catch(e){
+    showStatus('submitStatus','Network error.','err');
+    btn.disabled=false;btn.textContent='Save to Airtable & create work order →';
+  }
+}
+
+function buildPDF(jobNum){
+  const c=parsedData.client;
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-GB')+' '+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  // New header: customer name next to AM Print, job title below
+  const customerHeader=document.getElementById('pdf-customer-header');
+  if(customerHeader)customerHeader.textContent=document.getElementById('edit-client')?.value||c.name||'';
+  const jobTitleHeaderEl=document.getElementById('pdf-jobtitle-header');
+  if(jobTitleHeaderEl)jobTitleHeaderEl.textContent=jobTitle||'';
+
+  // Deadline in top right (replaces job number)
+  const deadlineHeader=document.getElementById('pdf-deadline-header');
+  if(deadlineHeader){
+    const dl=document.getElementById('edit-deadline')?.value||c.deadline||'';
+    if(dl){
+      const d=new Date(dl);
+      deadlineHeader.textContent=d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    }else{
+      deadlineHeader.textContent='–';
+    }
+  }
+
+  document.getElementById('pdf-date').textContent='Created: '+dateStr;
+  document.getElementById('pdf-footer-jobnum').textContent=jobNum;
+  document.getElementById('pdf-footer-date').textContent=now.toLocaleDateString('en-GB');
+
+  document.getElementById('pdf-client').textContent=document.getElementById('edit-client')?.value||c.name||'–';
+  document.getElementById('pdf-contact').textContent=document.getElementById('edit-contact')?.value||c.contact||'–';
+  document.getElementById('pdf-email').textContent=document.getElementById('edit-email')?.value||c.email||'–';
+  document.getElementById('pdf-phone').textContent=document.getElementById('edit-phone')?.value||c.phone||'–';
+  // Resolve salesperson name (not ID) for PDF display
+  const spSelVal=document.getElementById('edit-salesperson')?.value||'';
+  let spDisplayName='–';
+  if(spSelVal){
+    const found=collaborators.find(c=>c.id===spSelVal);
+    spDisplayName=found?found.name:spSelVal;
+    // If it's an ID code (starts with usr), show fallback
+    if(spDisplayName.startsWith('usr'))spDisplayName=gv('salesperson')||'–';
+  }
+  document.getElementById('pdf-seller').textContent=spDisplayName;
+  document.getElementById('pdf-delivery').textContent=document.getElementById('edit-delivery')?.value||c.delivery||'–';
+  document.getElementById('pdf-address').textContent=document.getElementById('edit-address')?.value||c.address||'–';
+  const jobTitleEl=document.getElementById('pdf-jobtitle');
+  if(jobTitleEl)jobTitleEl.textContent=jobTitle||'–';
+
+  const tbody=document.getElementById('pdf-products');
+  tbody.innerHTML='';
+  let total=0;
+  parsedData.products.forEach(p=>{
+    total+=(p.price||0);
+    const dTag=p.department==='Large Format'
+      ?`<span class="pdf-tag pdf-tag-suur">Large Format</span>`
+      :`<span class="pdf-tag pdf-tag-dig">Digital Print</span>`;
+    const aTag=p.subcontracted?`<span class="pdf-tag pdf-tag-alih">Outsourced</span>`:'';
+    tbody.innerHTML+=`<tr>
+      <td><strong>${p.name}</strong>${p.description?'<br><span style="font-size:11px;color:#555;">'+p.description+'</span>':''}</td>
+      <td style="text-align:center;">${p.quantity||''}</td>
+      <td>${dTag}</td>
+      <td>${aTag||'<span style="color:#ccc;font-size:11px;">–</span>'}</td>
+      <td style="text-align:right;font-weight:600;">${p.price!=null?p.price.toLocaleString('fi-FI',{minimumFractionDigits:2})+' €':''}</td>
+    </tr>`;
+  });
+
+  document.getElementById('pdf-total').textContent='€'+total.toFixed(2);
+
+  // Priority badge
+  const priority=document.getElementById('edit-priority')?.value||'Normal';
+  const badge=document.getElementById('pdf-priority-badge');
+  if(badge){
+    if(priority==='Urgent'){
+      badge.innerHTML='<span style="background:#F8D7DA;color:#721C24;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;">URGENT</span>';
+    }else if(priority==='Important'){
+      badge.innerHTML='<span style="background:#FFF3CD;color:#856404;font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:0.05em;">IMPORTANT</span>';
+    }else{
+      badge.innerHTML='';
+    }
+  }
+
+  // Notes and seller notes
+  const sellerNotesVal=document.getElementById('sellerNotes')?.value.trim()||'';
+  if(parsedData.notes||sellerNotesVal){
+    document.getElementById('pdf-notes-section').style.display='block';
+    document.getElementById('pdf-notes-text').textContent=parsedData.notes||'';
+    if(sellerNotesVal){
+      document.getElementById('pdf-seller-notes-wrap').style.display='block';
+      document.getElementById('pdf-seller-notes-text').textContent=sellerNotesVal;
+    }
+  }
+}
+
+function updatePriorityStyle(sel){
+  if(!sel)sel=document.getElementById('edit-priority');
+  if(!sel)return;
+  const colors={Normal:'#EAF3DE',Important:'#E6F1FB',Urgent:'#FCEBEB'};
+  sel.style.background=colors[sel.value]||'';
+}
+
+function removeProduct(i){
+  parsedData.products.splice(i,1);
+  showReview();
+}
+
+function extractCompanyFromEmail(email){
+  if(!email)return '';
+  const m=email.match(/@([^.]+)/);
+  if(!m)return '';
+  const domain=m[1].toLowerCase();
+  // Skip common free email providers
+  const skip=['gmail','hotmail','yahoo','outlook','live','icloud','me','msn','aol'];
+  if(skip.includes(domain))return '';
+  // Capitalize first letter
+  return domain.charAt(0).toUpperCase()+domain.slice(1);
+}
+
+function addManualProduct(){
+  parsedData.products.push({name:'',description:'',quantity:null,price:null,department:'Digital Print',subcontracted:false,notes:''});
+  showReview();
+  setTimeout(()=>{const pl=document.getElementById('productList');if(pl&&pl.lastElementChild)pl.lastElementChild.scrollIntoView({behavior:'smooth'});},150);
+}
+
+function backToPhase1(){
+  document.getElementById('phase2').classList.add('section-hidden');
+  document.getElementById('phase1').classList.remove('section-hidden');
+  setStep(1);
+}
+
+window.addEventListener("load", loadKeys);
+
+function printWithFilename(){
+  const now=new Date();
+  const dd=String(now.getDate()).padStart(2,'0');
+  const mm=String(now.getMonth()+1).padStart(2,'0');
+  const yyyy=now.getFullYear();
+  const dateStr=yyyy+'-'+mm+'-'+dd;
+  const customer=document.getElementById('edit-client')?.value.trim()||parsedData.client?.name||'';
+  const jt=document.getElementById('edit-jobtitle')?.value.trim()||jobTitle||'';
+  const parts=[dateStr,customer,jt].filter(Boolean);
+  const oldTitle=document.title;
+  document.title=parts.join(' ');
+  window.print();
+  setTimeout(()=>{document.title=oldTitle;},1000);
+}
+
+function resetAll(){
+  // Reset global state
+  parsedData={client:{},products:[],notes:''};
+  jobTitle='';
+  currentJobNum='';
+
+  // Clear all input fields
+  ['emailText','clientName','deadline','manualTotal','sellerNotes'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value='';
+  });
+
+  // Reset dropdowns to default
+  const sal=document.getElementById('salesperson');if(sal)sal.selectedIndex=0;
+  const editSal=document.getElementById('edit-salesperson');if(editSal)editSal.selectedIndex=0;
+  const editDel=document.getElementById('edit-delivery');if(editDel)editDel.selectedIndex=0;
+  const editPri=document.getElementById('edit-priority');if(editPri){editPri.value='Normal';updatePriorityStyle(editPri);}
+
+  // Clear status messages
+  ['parseStatus','submitStatus'].forEach(id=>{
+    const e=document.getElementById(id);if(e){e.className='';e.textContent='';}
+  });
+
+  // Reset submit button
+  const btn=document.getElementById('btnSubmit');
+  if(btn){btn.disabled=false;btn.textContent='Save to Airtable & create work order →';}
+
+  // Clear product list
+  const pl=document.getElementById('productList');if(pl)pl.innerHTML='';
+
+  // Reset total
+  const gt=document.getElementById('grandTotal');if(gt)gt.textContent='€0.00';
+
+  // Hide notes box and clear its content
+  const nb=document.getElementById('notesBox');if(nb)nb.classList.add('section-hidden');
+  const nt=document.getElementById('notesText');if(nt)nt.value='';
+
+  // Hide PDF and phase3, show phase1
+  document.getElementById('phase3').classList.add('section-hidden');
+  document.getElementById('phase2').classList.add('section-hidden');
+  document.getElementById('pdfSheet').style.display='none';
+  document.getElementById('phase1').classList.remove('section-hidden');
+  setStep(1);
+}
+
+async function pasteFromClipboard() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && text.length > 10) {
+      document.getElementById('emailText').value = text;
+      showStatus('parseStatus', '✅ Sähköposti liitetty! Paina "Tunnista tilaus" jatkaaksesi.', 'ok');
+      document.getElementById('btnFi').scrollIntoView({behavior: 'smooth', block: 'center'});
+    } else {
+      document.getElementById('emailText').focus();
+      showStatus('parseStatus', 'Leikepöytä on tyhjä — paina Ctrl+V liittääksesi käsin.', 'err');
+    }
+  } catch(e) {
+    document.getElementById('emailText').focus();
+    showStatus('parseStatus', 'Klikkaa tekstikenttää ja paina Ctrl+V.', 'ok');
+  }
+}
+
+</script>
+</body>
+</html>
